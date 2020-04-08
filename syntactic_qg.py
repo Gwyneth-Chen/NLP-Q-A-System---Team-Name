@@ -1,7 +1,15 @@
 #!/usr/bin/python3
 
+# TODO: question selection
+# TODO: grammar
+# TODO: choose correct wh-word
+# TODO: prune auxiliary clauses
+# TODO: Possibly generate better questions by looking for more specific things?
+# TODO: Yes/no questions
+
 import sys
 import functools as ft
+from typing import List
 
 import spacy  # type: ignore
 from spacy import displacy
@@ -35,31 +43,25 @@ def make_wh_question(blank_root, sentence):
 
 def convert_sentence(s):
     subject_root = None
-    obj_root = None
+
+    if s.root.pos_ not in ["VERB"]:
+        return None
 
     for token in s.root.children:
         if token.dep_ in ["nsubj", "nsubjpass"]:
             subject_root = token
-        if token.dep_ in ["pobj", "dobj"]:
-            obj_root = token
-        if token.dep_ in ["prep"]:
-            for t in token.children:
-                if t.dep_ in ["pobj", "dobj"]:
-                    obj_root = token
-    return make_wh_question(subject_root, s), make_wh_question(obj_root, s)
+    return make_wh_question(subject_root, s)
 
 
 if __name__ == "__main__":
     with open(sys.argv[1]) as f:
         text = f.read()
     doc = nlp(text)
+    candidates: List[str] = []
+    amt: int = int(sys.argv[2])
     for sentence in doc.sents:
-        question1, question2 = convert_sentence(sentence)
-
-        print(
-            "For sentence "
-            f'"{"".join(token.text_with_ws for token in sentence).strip()}":'
-        )
-
-        print("Found possible questions:")
-        print(f"  {question1, question2}")
+        question = convert_sentence(sentence)
+        if question is None:
+            continue
+        candidates.append(f"{question}")
+    print("\n".join(__import__("random").choices(candidates, k=amt)))
