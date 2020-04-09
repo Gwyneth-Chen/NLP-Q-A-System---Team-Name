@@ -3,6 +3,8 @@ from ubuntu:18.04
 RUN apt update -y
 RUN apt upgrade -y
 RUN apt install python3-pip -y
+RUN pip3 install spacy
+RUN python3 -m spacy download en_core_web_sm
 
 COPY . /QA
 WORKDIR /QA
