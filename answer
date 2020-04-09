@@ -1,5 +1,11 @@
-
 #!/usr/bin/env python3
+
+# TODO: question selection
+# TODO: grammar
+# TODO: choose correct wh-word
+# TODO: prune auxiliary clauses
+# TODO: Possibly generate better questions by looking for more specific things?
+# TODO: Yes/no questions
 
 from random import sample
 
