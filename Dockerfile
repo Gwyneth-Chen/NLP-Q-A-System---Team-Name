@@ -1,5 +1,8 @@
 from ubuntu:18.04
 
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+
 RUN apt update -y
 RUN apt upgrade -y
 RUN apt install python3-pip -y
