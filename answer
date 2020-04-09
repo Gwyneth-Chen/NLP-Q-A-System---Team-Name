@@ -1,0 +1,24 @@
+
+#!/usr/bin/env python3
+
+from random import sample
+
+answers = """I don't know
+I need to look this up
+who knows
+google it
+1973
+i was born in India
+selemat pagi
+satu dua tiga""".split("\n")
+
+def rand():
+    return sample(answers,1)[0]
+
+import sys
+
+_, article_path, questions_path, __* = sys.argv
+
+with open(question_path) as f:
+    for line in f:
+        print(rand())
