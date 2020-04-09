@@ -23,8 +23,8 @@ def rand():
 
 import sys
 
-_, article_path, questions_path, __* = sys.argv
+_, article_path, questions_path, *__ = sys.argv
 
-with open(question_path) as f:
+with open(questions_path) as f:
     for line in f:
         print(rand())
