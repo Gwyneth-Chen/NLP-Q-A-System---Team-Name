@@ -56,6 +56,8 @@ def construct_question(tokens):
     qtext = firstToken
     in_parenthetical = False
     for token in tokens[1:]:
+        if token == "n't":
+            continue
         if token[0] in ["("]:
             in_parenthetical = True
             continue
