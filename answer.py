@@ -57,17 +57,17 @@ def find_matches(doc, fixed_pre, q, fixed_post):
     post_matches = fuzzy_matches(sents, fixed_post.text) if fixed_post != None else []
 
     # get intersection of matching sentences, if both fixed_pre and fixed_post are not None
-    if not pre_matches:
+    post_set = set(post_matches)
+    matches = [s for s in pre_matches if s in post_set]
+    if not matches and not pre_matches:
         matches = post_matches
-    elif not post_matches:
+    elif not matches and not post_matches:
         matches = pre_matches
-    else:
-        post_set =set(post_matches)
-        matches = [s for s in pre_matches if s in post_set]
     return matches
 
 def best_match(doc, fixed_pre, q, fixed_post):
-    return find_matches(doc, fixed_pre, q, fixed_post)[0]
+    matches = find_matches(doc, fixed_pre, q, fixed_post)
+    return matches[0] if matches else None
 
 def process_be(doc, q):
     """
@@ -197,7 +197,7 @@ def get_answer(doc, question):
         return answer_question(doc, question, qtype)
     else:
         # replace with whatever default non-rule-based method
-        return # max(doc.sents, key=lambda x: convert_to_query(doc, question).similarity(x))
+        return answer_question(doc, question, qtype)
 
 if __name__ == "__main__":
     with open(sys.argv[1]) as f:
@@ -207,8 +207,9 @@ if __name__ == "__main__":
     with open(sys.argv[2]) as f:
         qtext = f.readlines()
 
-    # answers = [find_matches(doc, convert_to_query(doc, q), None, None) for q in questions.sents]
-    answers = [get_answer(doc, q) for line in qtext for q in nlp(line.strip()).sents]
-
-    for a in answers:
-        print(a.strip() if a != None else None)
+    for line in qtext:
+        sents = list(nlp(line.strip()).sents)
+        a = get_answer(doc, sents[0])
+        if a == None:
+            a = "None"
+        print(a.strip())
