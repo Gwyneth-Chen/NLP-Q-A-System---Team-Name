@@ -1,0 +1,67 @@
+#!/usr/bin/python3
+
+# TODO: question selection
+# TODO: grammar
+# TODO: choose correct wh-word
+# TODO: prune auxiliary clauses
+# TODO: Possibly generate better questions by looking for more specific things?
+# TODO: Yes/no questions
+
+import sys
+import functools as ft
+from typing import List
+
+import spacy  # type: ignore
+from spacy import displacy
+
+nlp = spacy.load("en_core_web_sm")
+
+
+def collect_indices(t):
+    return ft.reduce(set.union, (collect_indices(c) for c in t.children), {t.idx})
+
+
+def make_wh_question(blank_root, sentence):
+    if blank_root is None:
+        return None
+
+    indices = collect_indices(blank_root)
+    return (
+        "".join(
+            (
+                token.text_with_ws
+                if token.idx not in indices
+                else "what "
+                if token.idx <= min(indices)
+                else ""
+            )
+            for token in sentence
+        ).strip()[:-1]
+        + "?"
+    )
+
+
+def convert_sentence(s):
+    subject_root = None
+
+    if s.root.pos_ not in ["VERB"]:
+        return None
+
+    for token in s.root.children:
+        if token.dep_ in ["nsubj", "nsubjpass"]:
+            subject_root = token
+    return make_wh_question(subject_root, s)
+
+
+if __name__ == "__main__":
+    with open(sys.argv[1]) as f:
+        text = f.read()
+    doc = nlp(text)
+    candidates: List[str] = []
+    amt: int = int(sys.argv[2])
+    for sentence in doc.sents:
+        question = convert_sentence(sentence)
+        if question is None:
+            continue
+        candidates.append(f"{question}")
+    print("\n".join(__import__("random").choices(candidates, k=amt)))
