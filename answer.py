@@ -3,12 +3,14 @@
 import sys
 import itertools
 
+from helper import *
 import spacy
 from enum import Enum
 from spacy.symbols import *
 from fuzzywuzzy import process
 
 FUZZY_LIMIT = 3
+FUZZY_CUTOFF = 50
 
 nlp = spacy.load("en_core_web_sm") # need un-chunked data to identify question types
 nlp_chunk = spacy.load("en_core_web_sm")
@@ -40,7 +42,7 @@ def fuzzy_matches(sents, query):
     """
     results = process.extract(query, sents, limit=FUZZY_LIMIT)
     results.sort(reverse=True, key=lambda x: x[1])
-    matches = [res[0] for res in results if query != None]
+    matches = [res[0] for res in results if query != None and res[1] > FUZZY_CUTOFF]
     return matches
 
 def find_matches(doc, fixed_pre, q, fixed_post):
@@ -194,22 +196,28 @@ def answer_question(doc, q, qtype):
 def get_answer(doc, question):
     qtype = get_qtype(question)
     if qtype in [Qtype.WHO, Qtype.WHAT, Qtype.WHEN, Qtype.WHERE, Qtype.YN]:
-        return answer_question(doc, question, qtype)
+        a = answer_question(doc, question, qtype)
     else:
         # replace with whatever default non-rule-based method
-        return answer_question(doc, question, qtype)
+        a = answer_question(doc, question, qtype)
+    return a;
 
 if __name__ == "__main__":
-    with open(sys.argv[1]) as f:
+    article_path = sys.argv[1]
+
+    article = read_article(article_path)
+    qna, postags = parse_qna(1)
+
+    with open(article_path) as f:
         text = f.read()
     doc = nlp(text)
-    cdoc = nlp_chunk(text)
     with open(sys.argv[2]) as f:
         qtext = f.readlines()
 
     for line in qtext:
-        sents = list(nlp(line.strip()).sents)
-        a = get_answer(doc, sents[0])
+        q = list(nlp(line.strip()).sents)[0]
+        a = get_answer(doc, q)
         if a == None:
-            a = "None"
+            most_similar_q, dataset_answer = get_most_similar_question(q.text, qna, postags)
+            a = get_best_answer(most_similar_q, dataset_answer, article, postags)
         print(a.strip())
